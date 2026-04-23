@@ -398,7 +398,7 @@ export default function App() {
 
           <div className="text-center mb-10">
             <h1 className="text-2xl sm:text-3xl font-bold text-main tracking-tight mb-2">Ethereal Access</h1>
-            <p className="text-base text-muted">Sign in to your intelligent workspace.</p>
+            <p className="text-base text-muted">Sign in to your workspace.</p>
           </div>
 
           {loginError && (
