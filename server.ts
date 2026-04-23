@@ -189,6 +189,29 @@ async function startServer() {
     });
   });
 
+  // Quick access login for demos/assignments (no password required).
+  app.post('/api/quick-login', (_req, res) => {
+    const user = db.prepare('SELECT id, name, email, role FROM users WHERE email = ?')
+      .get(ADMIN_EMAIL) as { id: number; name: string; email: string; role: string } | undefined;
+
+    if (!user) {
+      res.status(500).json({ success: false, error: 'Default admin user not found' });
+      return;
+    }
+
+    const token = createToken();
+    const sessionExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24h
+    db.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)')
+      .run(token, user.id, sessionExpiry);
+
+    res.json({
+      success: true,
+      token,
+      user,
+      expiresAt: sessionExpiry,
+    });
+  });
+
   app.post('/api/logout', requireAuth, (req, res) => {
     const authHeader = req.headers.authorization!;
     const token = authHeader.slice('Bearer '.length);

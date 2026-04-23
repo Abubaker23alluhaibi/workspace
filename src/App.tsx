@@ -94,6 +94,10 @@ export default function App() {
   const [newTask, setNewTask] = useState({ description: '', assigned_employee_id: '' });
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const toNumber = (value: unknown): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
 
   // --- 3. Frontend JavaScript Integration ---
   const apiFetch = async (url: string, options: RequestInit = {}) => {
@@ -174,7 +178,7 @@ export default function App() {
     try {
       const response = await apiFetch('/api/transactions');
       const data = await response.json();
-      setTransactions(data);
+      setTransactions(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
     }
@@ -184,7 +188,11 @@ export default function App() {
     try {
       const response = await apiFetch('/api/financials/summary');
       const data = await response.json();
-      setFinancialSummary(data);
+      setFinancialSummary({
+        totalRevenue: toNumber(data?.totalRevenue),
+        totalExpenses: toNumber(data?.totalExpenses),
+        netProfit: toNumber(data?.netProfit),
+      });
     } catch (error) {
       console.error('Error fetching financial summary:', error);
     }
@@ -209,6 +217,26 @@ export default function App() {
         setLoginError(data.error || 'Login failed');
       }
     } catch (error) {
+      setLoginError('Server error. Please try again.');
+    }
+  };
+
+  const handleQuickLogin = async () => {
+    setLoginError('');
+    try {
+      const response = await fetch('/api/quick-login', {
+        method: 'POST',
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAuthToken(data.token);
+        setCurrentUser(data.user);
+        setIsAuthenticated(true);
+        localStorage.setItem('auth', JSON.stringify({ token: data.token, user: data.user }));
+      } else {
+        setLoginError(data.error || 'Quick login failed');
+      }
+    } catch (_error) {
       setLoginError('Server error. Please try again.');
     }
   };
@@ -369,6 +397,15 @@ export default function App() {
               >
                 Authenticate
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={handleQuickLogin}
+                className="w-full flex justify-center items-center py-3 px-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all"
+              >
+                Quick Login (No Registration)
               </button>
             </div>
           </form>
