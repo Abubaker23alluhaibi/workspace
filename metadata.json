@@ -1,0 +1,6 @@
+{
+  "name": "Workspace Management Pro",
+  "description": "A sophisticated employee and task management dashboard with a Node.js and SQLite backend.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
