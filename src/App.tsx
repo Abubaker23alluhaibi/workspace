@@ -90,8 +90,15 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingEmployee, setIsAddingEmployee] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ name: '', role: '', department: '' });
   const [newTask, setNewTask] = useState({ description: '', assigned_employee_id: '' });
+  const [newTransaction, setNewTransaction] = useState({
+    type: 'Income' as 'Income' | 'Expense',
+    amount: '',
+    description: '',
+    assigned_employee_id: '',
+  });
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const toNumber = (value: unknown): number => {
@@ -309,6 +316,54 @@ export default function App() {
       }
     } catch (error) {
       console.error('Error adding task:', error);
+    }
+  };
+
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amount = parseFloat(newTransaction.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert('Please enter a valid positive amount.');
+      return;
+    }
+
+    try {
+      const response = await apiFetch('/api/transactions', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: newTransaction.type,
+          amount,
+          description: newTransaction.description,
+          assigned_employee_id: newTransaction.assigned_employee_id
+            ? parseInt(newTransaction.assigned_employee_id, 10)
+            : null,
+        }),
+      });
+
+      if (response.ok) {
+        setNewTransaction({
+          type: 'Income',
+          amount: '',
+          description: '',
+          assigned_employee_id: '',
+        });
+        setIsAddingTransaction(false);
+        fetchTransactions();
+        fetchFinancialSummary();
+      }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+    }
+  };
+
+  const handleDeleteTransaction = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this transaction?')) return;
+    try {
+      await apiFetch(`/api/transactions/${id}`, { method: 'DELETE' });
+      fetchTransactions();
+      fetchFinancialSummary();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
     }
   };
 
@@ -697,10 +752,78 @@ export default function App() {
             {/* Finance Tab */}
             {activeTab === 'finance' && (
               <div className="space-y-10">
-                <div>
-                  <h2 className="text-3xl font-bold tracking-tight text-main">Financial Management</h2>
-                  <p className="text-muted mt-1">Monitor revenue, expenses, and employee performance.</p>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-main">Financial Management</h2>
+                    <p className="text-muted mt-1">Monitor revenue, expenses, and employee performance.</p>
+                  </div>
+                  <button
+                    onClick={() => setIsAddingTransaction(true)}
+                    className="flex items-center gap-2 py-2.5 px-6 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add Transaction
+                  </button>
                 </div>
+
+                {isAddingTransaction && (
+                  <div className="card p-6">
+                    <form onSubmit={handleAddTransaction} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <select
+                        value={newTransaction.type}
+                        onChange={(e) => setNewTransaction({ ...newTransaction, type: e.target.value as 'Income' | 'Expense' })}
+                        className="w-full input-field rounded-xl px-4 py-3 text-sm"
+                        required
+                      >
+                        <option value="Income">Income</option>
+                        <option value="Expense">Expense</option>
+                      </select>
+                      <input
+                        required
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Amount"
+                        value={newTransaction.amount}
+                        onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
+                        className="w-full input-field rounded-xl px-4 py-3 text-sm"
+                      />
+                      <input
+                        required
+                        type="text"
+                        placeholder="Description"
+                        value={newTransaction.description}
+                        onChange={(e) => setNewTransaction({ ...newTransaction, description: e.target.value })}
+                        className="w-full input-field rounded-xl px-4 py-3 text-sm"
+                      />
+                      <select
+                        value={newTransaction.assigned_employee_id}
+                        onChange={(e) => setNewTransaction({ ...newTransaction, assigned_employee_id: e.target.value })}
+                        className="w-full input-field rounded-xl px-4 py-3 text-sm"
+                      >
+                        <option value="">System / Unassigned</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.id}>{emp.name}</option>
+                        ))}
+                      </select>
+                      <div className="lg:col-span-4 flex gap-3 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingTransaction(false)}
+                          className="px-5 py-2.5 border border-border-color rounded-xl font-semibold text-muted hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95"
+                        >
+                          Save Transaction
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                    <div className="card p-6 flex flex-col gap-4 border-l-4 border-emerald-500">
@@ -743,6 +866,7 @@ export default function App() {
                             <th className="text-left py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted">Trans.</th>
                             <th className="text-left py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted">Amount</th>
                             <th className="text-right py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
+                            <th className="text-right py-4 px-6 text-xs font-semibold uppercase tracking-wider text-muted">Action</th>
                           </tr>
                         </thead>
                         <tbody className="text-main">
@@ -758,6 +882,15 @@ export default function App() {
                                 </span>
                               </td>
                               <td className="py-4 px-6 text-right text-[10px] text-muted font-medium">{tx.date}</td>
+                              <td className="py-4 px-6 text-right">
+                                <button
+                                  onClick={() => handleDeleteTransaction(tx.id)}
+                                  className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                                  title="Delete transaction"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>

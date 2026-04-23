@@ -321,6 +321,61 @@ async function startServer() {
     }
   });
 
+  // Add new transaction
+  app.post('/api/transactions', requireAuth, (req, res) => {
+    const { type, amount, description, assigned_employee_id } = req.body as {
+      type?: string;
+      amount?: number;
+      description?: string;
+      assigned_employee_id?: number | null;
+    };
+
+    if (type !== 'Income' && type !== 'Expense') {
+      res.status(400).json({ error: 'Invalid transaction type' });
+      return;
+    }
+
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+      res.status(400).json({ error: 'Amount must be a positive number' });
+      return;
+    }
+
+    if (!description || !description.trim()) {
+      res.status(400).json({ error: 'Description is required' });
+      return;
+    }
+
+    try {
+      const employeeId = assigned_employee_id ?? null;
+      const info = db.prepare(`
+        INSERT INTO transactions (type, amount, description, assigned_employee_id)
+        VALUES (?, ?, ?, ?)
+      `).run(type, amount, description.trim(), employeeId);
+
+      const created = db.prepare(`
+        SELECT transactions.*, employees.name as employee_name
+        FROM transactions
+        LEFT JOIN employees ON transactions.assigned_employee_id = employees.id
+        WHERE transactions.id = ?
+      `).get(info.lastInsertRowid);
+
+      res.status(201).json(created);
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  // Delete transaction
+  app.delete('/api/transactions/:id', requireAuth, (req, res) => {
+    const { id } = req.params;
+    try {
+      db.prepare('DELETE FROM transactions WHERE id = ?').run(id);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
   // Get financial summary
   app.get('/api/financials/summary', requireAuth, (req, res) => {
     try {
