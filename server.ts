@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -122,7 +121,7 @@ if (!adminExists) {
   console.log(`Created default admin user: ${ADMIN_EMAIL}`);
 }
 
-async function startServer() {
+function startServer() {
   const app = express();
 
   // Middleware to parse JSON bodies
@@ -398,21 +397,15 @@ async function startServer() {
     }
   });
 
-  // Vite middleware setup for development
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    // Production static serving
-    const distPath = path.join(__dirname, 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
+  // Static frontend serving (Vanilla HTML/CSS/JS)
+  app.use(express.static(__dirname));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(__dirname, 'index.html'));
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);

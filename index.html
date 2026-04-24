@@ -1,13 +1,167 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Workspace Management Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Management Pro (Vanilla)</title>
+    <link rel="stylesheet" href="/style.css">
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <section id="loginView" class="login-shell">
+      <article class="glass-card login-card">
+        <h1>Workspace Management Pro</h1>
+        <p class="muted">Sign in to continue</p>
+        <form id="loginForm" class="stack">
+          <label for="emailInput">Email</label>
+          <input id="emailInput" type="email" required placeholder="admin@example.com">
+          <label for="passwordInput">Password</label>
+          <input id="passwordInput" type="password" required placeholder="••••••••">
+          <button type="submit" class="btn primary">Login</button>
+          <button type="button" id="quickLoginBtn" class="btn secondary">Quick Login</button>
+          <p id="loginError" class="error-text" aria-live="polite"></p>
+        </form>
+      </article>
+    </section>
+
+    <main id="appView" class="app-shell hidden">
+      <aside class="sidebar glass-card">
+        <header>
+          <h2>Workspace</h2>
+          <p class="muted">Management Dashboard</p>
+        </header>
+        <nav class="nav-list">
+          <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+          <button class="nav-btn" data-tab="employees">Employees</button>
+          <button class="nav-btn" data-tab="tasks">Tasks</button>
+          <button class="nav-btn" data-tab="finance">Finance</button>
+        </nav>
+        <footer>
+          <button id="darkModeBtn" class="btn secondary">Toggle Dark Mode</button>
+          <button id="logoutBtn" class="btn danger">Logout</button>
+        </footer>
+      </aside>
+
+      <section class="content">
+        <header class="topbar glass-card">
+          <h1 id="viewTitle">Dashboard</h1>
+          <p id="currentUserText" class="muted">Welcome</p>
+        </header>
+
+        <section id="tab-dashboard" class="tab-panel">
+          <div class="bento-grid">
+            <article class="glass-card stat-card">
+              <h3>Total Revenue</h3>
+              <p id="statRevenue">$0</p>
+            </article>
+            <article class="glass-card stat-card">
+              <h3>Total Expenses</h3>
+              <p id="statExpenses">$0</p>
+            </article>
+            <article class="glass-card stat-card">
+              <h3>Net Profit</h3>
+              <p id="statNet">$0</p>
+            </article>
+            <article class="glass-card stat-card">
+              <h3>Employees</h3>
+              <p id="statEmployees">0</p>
+            </article>
+            <article class="glass-card stat-card">
+              <h3>Pending Tasks</h3>
+              <p id="statPendingTasks">0</p>
+            </article>
+            <article class="glass-card stat-card">
+              <h3>Completed Tasks</h3>
+              <p id="statCompletedTasks">0</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="tab-employees" class="tab-panel hidden">
+          <article class="glass-card section-card">
+            <h3>Employees</h3>
+            <form id="employeeForm" class="inline-form">
+              <input id="employeeName" type="text" required placeholder="Name">
+              <input id="employeeRole" type="text" required placeholder="Role">
+              <input id="employeeDepartment" type="text" required placeholder="Department">
+              <button type="submit" class="btn primary">Add Employee</button>
+            </form>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Department</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="employeesBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="tab-tasks" class="tab-panel hidden">
+          <article class="glass-card section-card">
+            <h3>Tasks</h3>
+            <form id="taskForm" class="inline-form">
+              <input id="taskDescription" type="text" required placeholder="Task Description">
+              <select id="taskEmployee" required></select>
+              <button type="submit" class="btn primary">Add Task</button>
+            </form>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tasksBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="tab-finance" class="tab-panel hidden">
+          <article class="glass-card section-card">
+            <h3>Finance</h3>
+            <form id="transactionForm" class="inline-form">
+              <select id="transactionType" required>
+                <option value="Income">Income</option>
+                <option value="Expense">Expense</option>
+              </select>
+              <input id="transactionAmount" type="number" min="0.01" step="0.01" required placeholder="Amount">
+              <input id="transactionDescription" type="text" required placeholder="Description">
+              <select id="transactionEmployee"></select>
+              <button type="submit" class="btn primary">Add Transaction</button>
+            </form>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Employee</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="transactionsBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="/script.js"></script>
   </body>
 </html>
 
